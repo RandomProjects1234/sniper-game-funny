@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>LONGSHOT — 3D Sniper</title>
+<link rel="stylesheet" href="style.css" />
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='16' cy='16' r='13' fill='none' stroke='%23d8b24a' stroke-width='2'/><path d='M16 3v9M16 20v9M3 16h9M20 16h9' stroke='%23d8b24a' stroke-width='2'/></svg>" />
+</head>
+<body>
+
+<canvas id="view"></canvas>
+
+<!-- ------------------------------ scope ------------------------------- -->
+<div id="scope" aria-hidden="true">
+  <div class="scope-hole">
+    <div class="glass"></div>
+    <svg class="reticle" viewBox="-100 -100 200 200" preserveAspectRatio="xMidYMid meet">
+      <g stroke="#0d0f0c" stroke-width="0.7" fill="none" opacity="0.92">
+        <!-- posts -->
+        <line x1="-96" y1="0" x2="-9" y2="0" stroke-width="1.6"/>
+        <line x1="96" y1="0" x2="9" y2="0" stroke-width="1.6"/>
+        <line x1="0" y1="-96" x2="0" y2="-9" stroke-width="1.6"/>
+        <line x1="0" y1="96" x2="0" y2="26" stroke-width="1.6"/>
+        <!-- fine cross -->
+        <line x1="-9" y1="0" x2="9" y2="0" stroke-width="0.45"/>
+        <line x1="0" y1="-9" x2="0" y2="26" stroke-width="0.45"/>
+        <!-- holdover ladder -->
+        <g stroke-width="0.9">
+          <line x1="-5" y1="9"  x2="5"  y2="9"/>
+          <line x1="-4" y1="15" x2="4"  y2="15"/>
+          <line x1="-6" y1="21" x2="6"  y2="21"/>
+          <line x1="-3" y1="27" x2="3"  y2="27"/>
+          <line x1="-5" y1="33" x2="5"  y2="33"/>
+          <line x1="-3" y1="39" x2="3"  y2="39"/>
+          <line x1="-7" y1="45" x2="7"  y2="45"/>
+        </g>
+        <!-- windage dots -->
+        <g fill="#0d0f0c" stroke="none">
+          <circle cx="-16" cy="0" r="0.85"/><circle cx="-26" cy="0" r="0.85"/>
+          <circle cx="-36" cy="0" r="0.85"/><circle cx="-46" cy="0" r="0.85"/>
+          <circle cx="16"  cy="0" r="0.85"/><circle cx="26"  cy="0" r="0.85"/>
+          <circle cx="36"  cy="0" r="0.85"/><circle cx="46"  cy="0" r="0.85"/>
+          <circle cx="0" cy="-16" r="0.85"/><circle cx="0" cy="-26" r="0.85"/>
+          <circle cx="0" cy="-36" r="0.85"/>
+        </g>
+        <circle cx="0" cy="0" r="0.9" fill="#0d0f0c" stroke="none"/>
+      </g>
+    </svg>
+    <div class="scope-labels">
+      <span class="lbl-l">MIL</span><span class="lbl-r">DOT</span>
+    </div>
+  </div>
+  <div class="scope-outer"></div>
+</div>
+
+<div id="crosshair"><i></i><i></i><i></i><i></i></div>
+<div id="impact"></div>
+<div id="hitmarker"><i></i><i></i><i></i><i></i></div>
+<div id="muzzle"></div>
+<div id="vignette"></div>
+<div id="floaters"></div>
+
+<!-- ------------------------------- HUD -------------------------------- -->
+<div id="hud">
+
+  <div class="corner tl">
+    <div class="block">
+      <div class="k">SCORE</div>
+      <div class="v big" id="score">0</div>
+      <div class="combo-row">
+        <span class="k">CHAIN</span><span class="v" id="combo">—</span>
+        <span class="mini"><i id="combo-bar"></i></span>
+      </div>
+    </div>
+    <div class="block">
+      <div class="k">WAVE <b id="wave">1</b> · HOSTILES <b id="enemies-left">0</b></div>
+      <div class="meter"><span class="mk">GATE</span><i class="bar integrity"><b id="integrity-bar"></b></i></div>
+      <div class="meter"><span class="mk">VITALS</span><i class="bar health"><b id="health-bar"></b></i></div>
+    </div>
+    <div id="perks"></div>
+  </div>
+
+  <div class="corner tr">
+    <div class="block wind">
+      <div class="k">WIND</div>
+      <div class="compass"><span id="wind-arrow">➤</span></div>
+      <div class="v" id="wind-text">0.0 m/s</div>
+    </div>
+    <div class="block rangeblock">
+      <div class="k">RANGE</div>
+      <div class="v big" id="range">---- m</div>
+      <div class="k">OPTIC <b id="zoom">IRON</b></div>
+    </div>
+  </div>
+
+  <div class="corner bl">
+    <div class="block">
+      <div class="k">BREATH <span class="hint">[SHIFT]</span></div>
+      <i class="bar breath"><b id="breath-bar"></b></i>
+      <div class="k" style="margin-top:8px">FOCUS <span class="hint">[F]</span></div>
+      <i class="bar focus"><b id="focus-bar"></b></i>
+    </div>
+  </div>
+
+  <div class="corner br">
+    <div class="block ammo">
+      <div class="v big" id="ammo">5 / 5</div>
+      <div id="ammo-pips"></div>
+      <i class="bar reload"><b id="reload-ring"></b></i>
+      <div class="k">R RELOAD · RMB SCOPE · WHEEL ZOOM</div>
+    </div>
+  </div>
+
+  <div id="duck-hint">⚠ ENEMY MARKSMAN SIGHTED — HOLD <b>C</b> TO DUCK</div>
+  <div id="toast"></div>
+  <div id="banner"><div id="banner-title"></div><div id="banner-sub"></div></div>
+</div>
+
+<!-- ----------------------------- overlays ------------------------------ -->
+<div class="overlay" id="menu">
+  <div class="panel wide">
+    <div class="logo">LONG<span>SHOT</span></div>
+    <div class="tagline">One rifle. One valley. Hold the gate.</div>
+    <div class="menu-grid">
+      <div>
+        <h3>CONTROLS</h3>
+        <ul class="keys">
+          <li><b>MOUSE</b> aim</li>
+          <li><b>RIGHT MOUSE</b> / <b>SPACE</b> scope</li>
+          <li><b>LEFT MOUSE</b> fire</li>
+          <li><b>SHIFT</b> hold breath — steadies the reticle</li>
+          <li><b>WHEEL</b> change magnification</li>
+          <li><b>R</b> reload · <b>WASD</b> shift stance</li>
+          <li><b>C</b> duck behind the parapet</li>
+          <li><b>F</b> FOCUS — bullet time + kill cam</li>
+          <li><b>ESC</b> pause · <b>M</b> mute</li>
+        </ul>
+      </div>
+      <div>
+        <h3>THE JOB</h3>
+        <ul class="keys">
+          <li>Rounds <b>drop</b> and get <b>pushed by wind</b>. Aim high, aim upwind.</li>
+          <li>Read the <b>range</b> readout, then hold over with the ladder.</li>
+          <li><b>Headshots</b> drop anything instantly and pay double.</li>
+          <li><b>HEAVIES</b> carry a front plate — take the head, or flank the shot.</li>
+          <li>A <b>red glint</b> means a marksman has you. Duck, or bleed.</li>
+          <li>Chain kills without missing to run the multiplier up.</li>
+          <li>Every cleared wave buys a <b>perk</b>. Build your rifle.</li>
+        </ul>
+      </div>
+    </div>
+    <div class="row">
+      <button id="btn-start" class="primary">DEPLOY</button>
+      <div class="best">BEST <b id="menu-best">0</b></div>
+    </div>
+    <p class="dim" style="margin:16px 0 0">Desktop and a mouse. The game takes pointer lock when you deploy — press <b>ESC</b> to get your cursor back.</p>
+  </div>
+</div>
+
+<div class="overlay" id="pause">
+  <div class="panel">
+    <h2>PAUSED</h2>
+    <p class="dim">Weapon safe. Nothing is moving down there.</p>
+    <div class="row">
+      <button id="btn-resume" class="primary">RESUME</button>
+      <button id="btn-quit">ABANDON POST</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="upgrade">
+  <div class="panel wide">
+    <h2>REQUISITION</h2>
+    <p class="dim">Pick one before wave <b id="upgrade-wave">2</b> moves in.</p>
+    <div id="cards"></div>
+  </div>
+</div>
+
+<div class="overlay" id="gameover">
+  <div class="panel">
+    <h2 class="bad">OVERRUN</h2>
+    <p class="dim" id="go-reason"></p>
+    <div class="stats">
+      <div><span>SCORE</span><b id="go-score">0</b></div>
+      <div><span>WAVES</span><b id="go-wave">0</b></div>
+      <div><span>ACCURACY</span><b id="go-acc">0%</b></div>
+      <div><span>BEST</span><b id="go-best">0</b></div>
+    </div>
+    <div class="row">
+      <button id="btn-again" class="primary">RUN IT BACK</button>
+      <button id="btn-menu">MENU</button>
+    </div>
+  </div>
+</div>
+
+<div id="fatal">
+  <div class="panel">
+    <h2 class="bad">NO WEBGL2</h2>
+    <p class="dim">This browser could not open a WebGL2 context.</p>
+    <p class="dim" id="fatal-msg"></p>
+  </div>
+</div>
+
+<script src="src/engine.js"></script>
+<script src="src/audio.js"></script>
+<script src="src/world.js"></script>
+<script src="src/entities.js"></script>
+<script src="src/game.js"></script>
+</body>
+</html>
